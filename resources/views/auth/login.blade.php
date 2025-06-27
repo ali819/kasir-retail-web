@@ -121,8 +121,8 @@
                                     <button type="submit" id="submitButton" class="btn btn-primary w-100 py-8 mb-4 rounded-2">Masuk</button>
                                     <div class="d-flex align-items-center justify-content-center">
                                         <p class="fs-4 mb-0 fw-medium">Member baru ?</p>
-                                        {{-- <a class="text-primary fw-medium ms-2" href="{{ route('register') }}">Buat akun</a> --}}
-                                        <a class="text-primary fw-medium ms-2" href="javascript:void(0)" onclick="notify('Silahkan hubungi developer!')">Buat akun</a>
+                                        <a class="text-primary fw-medium ms-2" href="{{ route('register') }}">Buat akun</a>
+                                        {{-- <a class="text-primary fw-medium ms-2" href="javascript:void(0)" onclick="notify('Silahkan hubungi developer!')">Buat akun</a> --}}
                                     </div>
                                 </form>
                             </div>
