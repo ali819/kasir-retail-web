@@ -21,7 +21,42 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
+
+    // daftar role yang tersedia
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_STOK  = 'stok';
+    public const ROLE_KASIR = 'kasir';
+
+    public static function roleOptions(): array
+    {
+        return [
+            self::ROLE_ADMIN => 'Admin',
+            self::ROLE_STOK  => 'Staf Stok',
+            self::ROLE_KASIR => 'Kasir',
+        ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isStok(): bool
+    {
+        return $this->role === self::ROLE_STOK;
+    }
+
+    public function isKasir(): bool
+    {
+        return $this->role === self::ROLE_KASIR;
+    }
+
+    public function roleLabel(): string
+    {
+        return self::roleOptions()[$this->role] ?? ucfirst((string) $this->role);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

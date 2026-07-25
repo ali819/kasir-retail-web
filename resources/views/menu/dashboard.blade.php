@@ -3,542 +3,449 @@
 @section('title', 'Dashboard')
 
 <style>
-  .customs-top {
-    margin-top: 5px;
-  }
+  .kpi-tile { border-radius: 12px; padding: 16px; }
+  #ModalDetailPenjualan .table-responsive { padding-bottom: 8px; }
 </style>
 
 {{-- MAIN --}}
 <div class="container-fluid">
     <div class="row">
-      <div class="col-lg-12 d-flex align-items-strech">
-        <div class="card w-100">
-          <div class="card-body">
-            <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
-              <div class="mb-3 mb-sm-0">
-                <h3 class=" fw-semibold">Data Penjualan</h3>
-                <p class="card-subtitle mb-0">Grafik data minggu terakhir ( 6 hari terakhir )</p>
-              </div>
-              <div>
-                {{--  --}}
-                <select id="ChartShow" class="form-control">
-                  <option value="bar">Tampilan Grafik Omzet</option>
-                  <option value="pie">Tampilan Grafik Terlaris</option>
-                </select>
-              </div>
-            </div>
-            <div class="row align-items-center">
-              <div class="col-lg-8 col-md-8">
-                {{--  --}}
-                <canvas id="myBarChart" style="display: block; margin: auto; width:100%;max-width:800px"></canvas>
-                <canvas id="myPieChart" style="display: block; margin: auto; width:100%;max-width:400px" hidden></canvas>
-                {{--  --}}
-              </div>
-              <div class="col-lg-4 col-md-4">
-                <div class="d-flex align-items-center mb-4 pb-1">
-                  <div class="p-8 bg-light-primary rounded-1 me-3 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-grid-dots text-primary fs-6"></i>
-                  </div>
-                  <div>
-                    <h4 class="mb-0 fs-7 fw-semibold">{{ $totalPenjualan }}</h4>
-                    <p class="fs-3 mb-0">Omzet ( 6 hari terakhir )</p>
-                  </div>
-                </div>
-                <div>
-                  <div class="d-flex align-items-baseline mb-4">
-                    <span class="round-8 bg-primary rounded-circle me-6"></span>
-                    <div>
-                      <p class="fs-3 mb-1">Transaksi</p>
-                      <h6 class="fs-5 fw-semibold mb-0">{{ $totalTransaksi }}</h6>
+        <div class="col-lg-12 d-flex align-items-strech">
+            <div class="card w-100 mt-3">
+                <div class="card-body">
+                    <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
+                        <div class="mb-3 mb-sm-0">
+                            <h3 class="fw-semibold">Data Penjualan</h3>
+                            <p class="card-subtitle mb-0">Grafik 6 hari terakhir</p>
+                        </div>
+                        @if($isAdmin)
+                        <div>
+                            <select id="ChartShow" class="form-control">
+                                <option value="bar">Tampilan Grafik Omzet</option>
+                                <option value="pie">Tampilan Grafik Terlaris</option>
+                            </select>
+                        </div>
+                        @endif
                     </div>
-                  </div>
-                  <div class="d-flex align-items-baseline mb-4 pb-1">
-                    <span class="round-8 bg-secondary rounded-circle me-6"></span>
-                    <div>
-                      <p class="fs-3 mb-1">Barang Terjual</p>
-                      <h6 class="fs-5 fw-semibold mb-0">{{ $totalBarangTerjual }}</h6>
+                    <div class="row align-items-center">
+                        <div class="col-lg-8 col-md-8">
+                            @if($isAdmin)
+                            <div id="barwrap" style="position:relative; height:320px;">
+                                <canvas id="myBarChart"></canvas>
+                            </div>
+                            @endif
+                            <div id="piewrap" style="position:relative; height:320px; max-width:400px; margin:auto;" {{ $isAdmin ? 'hidden' : '' }}>
+                                <canvas id="myPieChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-4">
+                            <div class="d-flex align-items-center mb-4 pb-1">
+                                <div class="p-8 bg-light-primary rounded-1 me-3 d-flex align-items-center justify-content-center">
+                                    <i class="ti ti-grid-dots text-primary fs-6"></i>
+                                </div>
+                                <div>
+                                    <h4 class="mb-0 fs-7 fw-semibold">
+                                        @if($isAdmin){{ $totalPenjualan }}@else<span class="text-muted fs-5"><i class="ti ti-lock"></i> Khusus admin</span>@endif
+                                    </h4>
+                                    <p class="fs-3 mb-0">Omzet ( 6 hari terakhir )</p>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-baseline mb-4">
+                                    <span class="round-8 bg-primary rounded-circle me-6"></span>
+                                    <div>
+                                        <p class="fs-3 mb-1">Transaksi</p>
+                                        <h6 class="fs-5 fw-semibold mb-0">{{ $totalTransaksi }}</h6>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-baseline mb-4 pb-1">
+                                    <span class="round-8 bg-secondary rounded-circle me-6"></span>
+                                    <div>
+                                        <p class="fs-3 mb-1">Barang Terjual</p>
+                                        <h6 class="fs-5 fw-semibold mb-0">{{ $totalBarangTerjual }}</h6>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-lg btn-outline-primary w-100" id="btnShowAll">Detail Statistik<i class="ti ti-file-description"></i></button>
+                                    <button type="button" class="btn btn-outline-success w-100 mt-2 btn-lg" id="btnExportLaporan">Export Laporan <i class="ti ti-download"></i></button>
+
+                                </div>
+
+                            </div>
+                        </div>
+
                     </div>
-                  </div>
-                  <div>
-                    <button type="button" class="btn btn-primary w-100" id="btnShowAll">LIHAT SEMUA&emsp;<i class="ti ti-arrow-bar-to-right"></i></button>
-                  </div>
                 </div>
-              </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
 </div>
 
-{{-- MODAL --}}
-<div class="modal fade" id="ModalDetailPenjualan" data-bs-backdrop="dynamic" data-bs-keyboard="false" tabindex="-1" aria-labelledby="" style="display: none;" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header d-flex align-items-center">
-        <h4 class="modal-title" id="">
-          Detail Penjualan
-        </h4>
-      </div>
-      <div class="modal-body">
-        <div class="card-body">
-          <!--/row-->
-          <div class="col-12">
-            <div class="alert customize-alert alert-dismissible text-primary border border-primary fade show remove-close-icon" role="alert">
-              <div class="d-flex align-items-center font-medium me-3 me-md-0">
-                <i class="ti ti-info-circle fs-5 me-2 flex-shrink-0 text-primary"></i>
-                Menampilkan semua data penjualan
-              </div>
+{{-- MODAL EXPORT LAPORAN --}}
+<div class="modal fade" id="ModalExport" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><i class="ti ti-file-spreadsheet"></i>&nbsp; Export Laporan Excel</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-          </div>
-          <div class="row">
-            {{--  --}}
-            <div class="col-md-12">
-              <div class="border-top">
-                <div class="row gx-0">
-                  <div class="col-md-4 border-end">
-                    <div class="p-4 py-3 py-md-4">
-                      <p class="fs-4 text-danger mb-0">
-                        <span class="text-danger">
-                          <span class="round-8 bg-danger rounded-circle d-inline-block me-1"></span>
-                        </span>Total Omzet
-                      </p>
-                      <h3 class=" mt-2 mb-0" id="dataTotalOmzet">Rp 0</h3>
-                    </div>
-                  </div>
-                  <div class="col-md-4 border-end">
-                    <div class="p-4 py-3 py-md-4">
-                      <p class="fs-4 text-primary mb-0">
-                        <span class="text-primary">
-                          <span class="round-8 bg-primary rounded-circle d-inline-block me-1"></span>
-                        </span>Total Transaksi
-                      </p>
-                      <h3 class=" mt-2 mb-0" id="dataTotalTransaksi">0</h3>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="p-4 py-3 py-md-4">
-                      <p class="fs-4 text-info mb-0">
-                        <span class="text-info">
-                          <span class="round-8 bg-info rounded-circle d-inline-block me-1"></span>
-                        </span>Barang Terjual
-                      </p>
-                      <h3 class=" mt-2 mb-0" id="dataTotalTerjual">0</h3>
-                    </div>
-                  </div>
+            <div class="modal-body">
+                <div class="alert customize-alert text-primary border border-primary py-2">
+                    <i class="ti ti-info-circle me-1"></i> Laporan lengkap: Ringkasan, Per Transaksi, Detail Item, Rekap Produk, Kasir, Pelanggan &amp; Harian.
                 </div>
-              </div>
-            </div>
-            {{--  --}}
-            <div class="col-md-12" align="right">
-             <button type="button" class="btn btn-outline-info" style="margin-bottom:5px; font-weight:bold;" id="btnHitungPenjualan">Hitung Penjualan <i class="ti ti-refresh"></i></button>
-            </div>
-            <div class="col-md-12">
-              <input type="text" class="form-control customs-top" id="cariNamaBarang" placeholder="Nama barang ..">
-            </div>
-            <div class="col-md-4">
-              <input type="text" class="form-control customs-top" id="cariIdTransaksi" placeholder="ID transaksi ..">
-            </div>
-            <div class="col-md-4">
-              <input type="text" class="form-control customs-top" id="cariQty" placeholder="Qty ..">
-            </div>
-            <div class="col-md-4">
-              <input type="text" class="form-control customs-top" id="cariSatuan" placeholder="Satuan ..">
-            </div>
-            <div class="col-md-6">
-              <input type="date" class="form-control customs-top" id="cariTanggal" placeholder="Tanggal ..">
-            </div>
-            <div class="col-md-6">
-              <input type="number" class="form-control customs-top" id="cariTotalHarga" placeholder="Total harga ..">
-            </div>
-            <div class="col-12">
-              <br>
-              <div class="progress">
-                <div class="progress-bar progress-bar-striped bg-primary progress-bar-animated animasiProgressBar" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
-              </div>
-            </div>
-
-            {{--  --}}
-            <div class="col-12">
-              <div class="card-body">
-                <div class="table-responsive rounded-2 mb-4">
-                  <br>
-                  <table class="table border text-nowrap customize-table mb-0 align-middle" id="tabel_detail_pembelian">
-                    <thead class="text-dark fs-4">
-                      <tr>
-                        <th><h6 class="fs-4 fw- mb-0"><input type="checkbox"></h6></th>
-                        <th><h6 class="fs-4 fw- mb-0">Detail&nbsp;Barang</h6></th>
-                        <th><h6 class="fs-4 fw- mb-0">Qty&nbsp;|&nbsp;Satuan</h6></th>
-                        <th><h6 class="fs-4 fw- mb-0">Total&nbsp;Harga</h6></th>
-                      </tr>
-                    </thead>
-                  </table>
-                  <div class="d-flex align-items-center justify-content-end py-1">
-                    <br>
-                  </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="fs-2 mb-1"><b>Dari</b></label>
+                        <input type="date" class="form-control" id="exportMulai">
+                    </div>
+                    <div class="col-6">
+                        <label class="fs-2 mb-1"><b>Sampai</b></label>
+                        <input type="date" class="form-control" id="exportSelesai">
+                    </div>
                 </div>
-              </div>
             </div>
-            {{--  --}}
-          </div>
-          <!--/row-->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success fw-semibold" id="btnDoExport"><i class="ti ti-download"></i>&nbsp; Export Excel</button>
+            </div>
         </div>
-      </div>
-      <div class="modal-footer" style="">
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tutup&emsp;<i class="ti ti-x"></i></button>
-      </div>
     </div>
-  </div>
 </div>
 
-{{-- PILIHAN --}}
+{{-- MODAL DETAIL PENJUALAN --}}
+<div class="modal fade" id="ModalDetailPenjualan" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><i class="ti ti-chart-bar"></i>&nbsp; Detail Penjualan</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {{-- KPI TILES --}}
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <div class="kpi-tile bg-light-danger">
+                            <p class="fs-3 mb-1 text-danger"><span class="round-8 bg-danger rounded-circle d-inline-block me-1"></span> Total Omzet</p>
+                            <h3 class="mb-0 fw-bold text-danger" id="dataTotalOmzet">Rp 0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="kpi-tile bg-light-primary">
+                            <p class="fs-3 mb-1 text-primary"><span class="round-8 bg-primary rounded-circle d-inline-block me-1"></span> Total Transaksi</p>
+                            <h3 class="mb-0 fw-bold text-primary" id="dataTotalTransaksi">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="kpi-tile bg-light-info">
+                            <p class="fs-3 mb-1 text-info"><span class="round-8 bg-info rounded-circle d-inline-block me-1"></span> Barang Terjual</p>
+                            <h3 class="mb-0 fw-bold text-info" id="dataTotalTerjual">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- REKAP RENTANG TANGGAL --}}
+                <div class="border rounded p-3 mb-3">
+                    <label class="fs-2 mb-1"><b>Rekap penjualan (rentang tanggal)</b></label>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-5 col-6">
+                            <label class="fs-2 mb-1 text-muted">Dari</label>
+                            <input type="date" class="form-control" id="cariTanggalMulai">
+                        </div>
+                        <div class="col-md-5 col-6">
+                            <label class="fs-2 mb-1 text-muted">Sampai</label>
+                            <input type="date" class="form-control" id="cariTanggalSelesai">
+                        </div>
+                        <div class="col-md-2 col-12">
+                            <button type="button" class="btn btn-info fw-semibold w-100" id="btnHitungPenjualan"><i class="ti ti-calculator"></i> Hitung</button>
+                        </div>
+                    </div>
+                    <small class="text-muted">Rentang ini juga memfilter tabel di bawah.</small>
+                </div>
+
+                {{-- FILTER TABEL --}}
+                <div class="row g-2 mb-1">
+                    <div class="col-md-4 col-6">
+                        <label class="fs-2 mb-1">Nama Barang</label>
+                        <input type="text" class="form-control" id="cariNamaBarang" placeholder="Nama barang ..">
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <label class="fs-2 mb-1">ID Transaksi</label>
+                        <input type="text" class="form-control" id="cariIdTransaksi" placeholder="TRX-..">
+                    </div>
+                    <div class="col-md-2 col-4">
+                        <label class="fs-2 mb-1">Qty</label>
+                        <input type="number" class="form-control" id="cariQty" placeholder="Qty">
+                    </div>
+                    <div class="col-md-3 col-8">
+                        <label class="fs-2 mb-1">Total Harga</label>
+                        <input type="number" class="form-control" id="cariTotalHarga" placeholder="Nominal ..">
+                    </div>
+                </div>
+
+                <div class="progress my-2">
+                    <div class="progress-bar progress-bar-striped bg-primary progress-bar-animated animasiProgressBar" role="progressbar" style="width: 0%"></div>
+                </div>
+
+                {{-- TABEL --}}
+                <div class="table-responsive">
+                    <table class="table align-middle text-nowrap mb-0" id="tabel_detail_pembelian" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>Barang</th>
+                                <th>ID Transaksi</th>
+                                <th>Tanggal</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Harga</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tutup&emsp;<i class="ti ti-x"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-  $(document).on('change','#ChartShow', function() {
-      var selectedOption = $('#ChartShow').val();
-      chartShow(selectedOption);
-      saveChartTypePreference(selectedOption);
-  });
-  function chartShow(select) {
-    if(select === 'pie') {
-      $('#myPieChart').attr('hidden',false);
-      $('#myBarChart').attr('hidden',true);
-    }
-    if(select === 'bar') {
-      $('#myPieChart').attr('hidden',true);
-      $('#myBarChart').attr('hidden',false);
-    }
-  }
-  $(document).ready(function () {
-    var savedChartType = getChartTypePreference();
-    $('#ChartShow').val(savedChartType);
-    chartShow(savedChartType);
-  });
+    function escapeHtml(t){ if(t==null) return ''; return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+    function trimText(t){ t = t||''; return t.length > 28 ? t.substring(0,28)+'..' : t; }
+    function formatRupiah(angka){ angka = Math.floor(angka || 0); return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+    function animasiProgressBar_run(){ $('.animasiProgressBar').css('width','100%'); }
+    function animasiProgressBar_stop(){ $('.animasiProgressBar').css('width','0%'); }
 
-  // Function to save the selected chart type to local storage
-  function saveChartTypePreference(chartType) {
-    localStorage.setItem('chartType', chartType);
-  }
+    var IS_ADMIN = @json($isAdmin);
 
-  // Function to retrieve the selected chart type from local storage
-  function getChartTypePreference() {
-    return localStorage.getItem('chartType') || 'pie'; // Default to 'pie' if not set
-  }
+    // ===== PILIHAN GRAFIK =====
+    $(document).on('change', '#ChartShow', function () {
+        var v = $(this).val();
+        chartShow(v);
+        localStorage.setItem('chartType', v);
+    });
+    function chartShow(select) {
+        $('#piewrap').attr('hidden', select !== 'pie');
+        $('#barwrap').attr('hidden', select !== 'bar');
+        setTimeout(function () {
+            if (select === 'pie' && window.pieChart) window.pieChart.resize();
+            if (select === 'bar' && window.barChart) window.barChart.resize();
+        }, 30);
+    }
+    $(document).ready(function () {
+        var saved = IS_ADMIN ? (localStorage.getItem('chartType') || 'bar') : 'pie';
+        $('#ChartShow').val(saved);
+        chartShow(saved);
+    });
+
+    // Lihat Semua & Export Laporan: khusus admin
+    $(document).on('click', '#btnShowAll', function () {
+        if (!IS_ADMIN) return toastError('Fitur ini hanya untuk admin!');
+        $('#ModalDetailPenjualan').modal('show');
+    });
+    $(document).on('click', '#btnExportLaporan', function () {
+        if (!IS_ADMIN) return toastError('Export laporan hanya untuk admin!');
+        $('#exportMulai').val('').removeAttr('max');
+        $('#exportSelesai').val('').removeAttr('min');
+        $('#ModalExport').modal('show');
+    });
+    // batasi rentang: mulai <= selesai (min/max saling mengunci)
+    $(document).on('change', '#exportMulai', function () {
+        $('#exportSelesai').attr('min', this.value || '');
+        if ($('#exportSelesai').val() && this.value && $('#exportSelesai').val() < this.value) $('#exportSelesai').val('');
+    });
+    $(document).on('change', '#exportSelesai', function () {
+        $('#exportMulai').attr('max', this.value || '');
+        if ($('#exportMulai').val() && this.value && $('#exportMulai').val() > this.value) $('#exportMulai').val('');
+    });
+    $(document).on('click', '#btnDoExport', function () {
+        var mulai = $('#exportMulai').val(), selesai = $('#exportSelesai').val();
+        if (!mulai || !selesai) return toastError('Pilih tanggal mulai & selesai!');
+        if (mulai > selesai) return toastError('Tanggal mulai tidak boleh setelah tanggal selesai!');
+        window.location = "{{ route('export_laporan') }}" + '?mulai=' + encodeURIComponent(mulai) + '&selesai=' + encodeURIComponent(selesai);
+        toastSuccess('Menyiapkan file Excel..');
+        $('#ModalExport').modal('hide');
+    });
 </script>
 
 {{-- GRAFIK --}}
 <script src="{{ asset('template/chart/chart.min.js') }}"></script>
 <script>
-  // BAR CHART
-  var xValues = @json(array_values($xValues));
-  var yValues = @json(array_values($yValues));
+    var xValues = @json(array_values($xValues));
+    var yValues = @json($isAdmin ? array_values($yValues) : []);
 
-  new Chart("myBarChart", {
-    type: "bar",
-    data: {
-      labels: xValues,
-      datasets: [{
-        backgroundColor: [
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-        ],
-        borderColor: [
-          'rgb(54, 162, 235)',
-          'rgb(54, 162, 235)',
-          'rgb(54, 162, 235)',
-          'rgb(54, 162, 235)',
-          'rgb(54, 162, 235)',
-          'rgb(54, 162, 235)',
-        ],
-        borderWidth: 1,
-        data: yValues
-      }]
-    },
-    options: {
-      legend: {display: false},
-      title: {
-        display: true,
-        text: "Total omzet (Rp) per tanggal"
-      }
-    }
-  });
-</script>
-@php
-  $xValuesPie = $topProducts->pluck('nama_barang')->toArray();
-  $yValuesPie = $topProducts->pluck('total_qty')->toArray();
-  $barColorsPie = ['#b91d47', '#00aba9', '#2b5797', '#e8c3b9', '#1e7145'];
-@endphp
-<script>
-  // PIE CHART
-  const xValuesPie = @json($xValuesPie);
-  const yValuesPie = @json($yValuesPie);
-  const barColorsPie = @json($barColorsPie);
+    function rpAxis(v) { return 'Rp ' + Number(v).toLocaleString('id-ID'); }
 
-  new Chart("myPieChart", {
-      type: "pie",
-      data: {
-          labels: xValuesPie,
-          datasets: [{
-              backgroundColor: barColorsPie,
-              data: yValuesPie
-          }]
-      },
-      options: {
-          title: {
-              display: true,
-              text: "Produk paling banyak di jual ( 6 hari terakhir )"
-          }
-      }
-  });
-</script>
-
-{{-- MODAL --}}
-<script>
-  $(document).on('click','#btnShowAll', function () {
-      $('#ModalDetailPenjualan').modal('show');
-  });
-</script>
-
-{{-- LIST PEMBELIAN (TABEL & HITUNGAN) --}}
-<script>
-  // TABEL & CARI
-  $(document).ready(function () {
-    var tabel_detail_pembelian = $("#tabel_detail_pembelian").DataTable({
-        dom: 'lrtip',
-        order: [
-            [6,'DESC']
-        ],
-        lengthMenu: [ 
-          [10, 25, 50, 100, 500], 
-          [10, 25, 50, 100, 500] 
-        ],
-        autoWidth: false,
-        language: {
-            "sProcessing":   "Sedang memproses...",
-            "sLengthMenu":   "Tampilkan _MENU_ entri",
-            "sZeroRecords":  "Tidak ditemukan data yang sesuai",
-            "loadingRecords": "Memuat data, mohon tunggu ...",
-            "sInfo":         "Total : <b>_TOTAL_</b> entri",
-            "sInfoEmpty":    "Menampilkan : <b>0</b> entri",
-            "sInfoFiltered": "",
-            "sInfoPostFix":  "",
-            "sSearch":       "Cari : ",
-            "sUrl":          "",
-            "oPaginate": {
-                "sFirst":    "Pertama",
-                "sPrevious": "<i class='ti ti-chevron-left'></i>",
-                "sNext":     "<i class='ti ti-chevron-right'></i>",
-                "sLast":     "Terakhir"
+    // BAR CHART (OMZET) — canvas hanya dirender untuk admin
+    if (document.getElementById('myBarChart')) {
+    window.barChart = new Chart("myBarChart", {
+        type: "bar",
+        data: {
+            labels: xValues,
+            datasets: [{
+                label: 'Omzet',
+                backgroundColor: 'rgba(93, 135, 255, 0.25)',
+                borderColor: 'rgb(93, 135, 255)',
+                borderWidth: 1.5,
+                data: yValues
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 0 },
+            legend: { display: false },
+            title: { display: true, text: 'Total Omzet per Tanggal (Rp)', fontSize: 15 },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function (v) { return rpAxis(v); }
+                    }
+                }]
+            },
+            tooltips: {
+                callbacks: {
+                    label: function (item) { return ' ' + rpAxis(item.yLabel); }
+                }
             }
-        },
-        serverSide: true,
-        ajax: {
-            url: "{{ route('tabel_detail_pembelian') }}",
-            type: 'GET',
-        },
-        columns: [
-            {
-                data: 'id',
-                className: 'clickableCell',
-                orderable: false,
-                render: function(data, type, row, meta) {
-                    return `<input type="checkbox" class="" data-id="${data}" data-id-transaksi="${row.id_transaksi}">`;
-                }
-            },
-            {
-                data: 'id_transaksi',
-                render: function (data, type, row, meta) {
-                    var nama_barang = row.nama_barang;
-                    var id_transaksi = row.id_transaksi;
-                    var tanggal = row.formatted_date;
-  
-                    var views = `
-                        <div class="d-flex align-items-center">
-                            <div class="ms-3" style="margin-left: 0rem !important;">
-                            <h6 class="fw-semibold mb-0 fs-4">${nama_barang}</h6>
-                            <p class="mb-0">${trimText(id_transaksi)}</p>
-                            <p class="mb-0 mt-1">[&emsp;${tanggal}&emsp;]</p>
-                            </div>
-                        </div>
-                    `;
-  
-                    return views;
-                }
-            },
-            {
-                data: 'qty',
-                orderable: false,
-                render: function(data, type, row, meta) {
-                  var qty = row.qty;
-                  var satuan = row.satuan;
-                  var qty_satuan = 
-                  `
-                    <p class="mb-0 mt-1">
-                      <b>${qty}</b>&nbsp;|&nbsp;${satuan}
-                    </p>
-                  `;
-                        
-                    return qty_satuan;
-                }
-            },
-            {
-              data: 'total_harga',
-              render: function(data, type, row, meta) {
-                  var total_harga = formatRupiah(row.total_harga);
-                  return `<span style="color:red; font-weight:bold;">${total_harga}</span>`;
-                }
-            },
-            {
-              data: 'nama_barang',
-              visible: false
-            },
-            {
-              data: 'satuan',
-              visible: false
-            },
-            {
-              data: 'created_at',
-              visible: false
-            },
-    
-        ],
-        drawCallback: function(settings) {
-            // Fungsi yang akan dijalankan setelah tabel selesai di-draw
-            animasiProgressBar_stop();
         }
     });
-  
-    // PENCARIAN
-    let cariNamaBarang = null;
-    $('#cariNamaBarang').on('input', function() {
-        clearTimeout(cariNamaBarang);
-        cariNamaBarang = setTimeout( function() {
-          animasiProgressBar_run();
-          tabel_detail_pembelian.column(4).search($('#cariNamaBarang').val()).draw();
-        }, 500);
-    });
-    let cariIdTransaksi = null;
-    $('#cariIdTransaksi').on('input', function() {
-        var values = $(this).val();
-        $('#cariIdTransaksi').val(values.toUpperCase());
-        clearTimeout(cariIdTransaksi);
-        cariIdTransaksi = setTimeout( function() {
-          animasiProgressBar_run();
-          tabel_detail_pembelian.column(1).search($('#cariIdTransaksi').val()).draw();
-        }, 500);
-    });
-    let cariQty = null;
-    $('#cariQty').on('input', function() {
-        clearTimeout(cariQty);
-        cariQty = setTimeout( function() {
-          animasiProgressBar_run();
-          tabel_detail_pembelian.column(2).search($('#cariQty').val()).draw();
-        }, 500);
-    });
-    let cariSatuan = null;
-    $('#cariSatuan').on('input', function() {
-        clearTimeout(cariSatuan);
-        cariSatuan = setTimeout( function() {
-          animasiProgressBar_run();
-          tabel_detail_pembelian.column(5).search($('#cariSatuan').val()).draw();
-        }, 500);
-    });
-    let cariTotalHarga = null;
-    $('#cariTotalHarga').on('input', function() {
-        clearTimeout(cariTotalHarga);
-        cariTotalHarga = setTimeout( function() {
-          animasiProgressBar_run();
-          tabel_detail_pembelian.column(3).search($('#cariTotalHarga').val()).draw();
-        }, 500);
-    });
-    $('#cariTanggal').on('change', function() {
-      animasiProgressBar_run();
-      tabel_detail_pembelian.column(6).search($('#cariTanggal').val()).draw();
-    });
-
-  });
-
-  // BUTTON HITUNG PENJUALAN
-  $(document).on('change','#cariTanggal', function() {
-      var values = $('#cariTanggal').val();
-      var dataTotalOmzet = $('#dataTotalOmzet');
-      var dataTotalTransaksi = $('#dataTotalTransaksi');
-      var dataTotalTerjual = $('#dataTotalTerjual');
-
-      dataTotalOmzet.html('Rp 0');
-      dataTotalTransaksi.html('0');
-      dataTotalTerjual.html('0');
-
-  });
-  $(document).on('click','#btnHitungPenjualan', function() {
-    var btnDef = $('#btnHitungPenjualan').html();
-    var tanggal = $('#cariTanggal').val();
-    if(tanggal === '') {
-      return toastError("Pilih tanggal penjualan!");
     }
-    customConfirm("Hitung penjualan ?","Data akan dihitung berdasarkan tanggal yang dipilih.").then((confirmed) => {
-      if (confirmed) {
-        
-        $('#btnHitungPenjualan').attr('disabled',true);
-        $('#btnHitungPenjualan').html('Memproses ..');
+</script>
 
-        $.ajax({
-          type: "GET",
-          url: "{{ route('hitung_data_pembelian') }}",
-          data: {
-            tanggal: tanggal
-          },
-          dataType: "JSON",
-          success: function (response) {
-            
-            if(response.kode == 404){
-              toastError(response.pesan);
-              return;
+@php
+    $xValuesPie = $topProducts->pluck('nama_barang')->toArray();
+    $yValuesPie = $topProducts->pluck('total_qty')->toArray();
+    $barColorsPie = ['#5d87ff', '#49beff', '#13deb9', '#ffae1f', '#fa896b'];
+@endphp
+<script>
+    // PIE CHART (TERLARIS)
+    window.pieChart = new Chart("myPieChart", {
+        type: "pie",
+        data: {
+            labels: @json($xValuesPie),
+            datasets: [{ backgroundColor: @json($barColorsPie), data: @json($yValuesPie) }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 0 },
+            title: { display: true, text: 'Produk Terlaris ( 6 hari terakhir )', fontSize: 15 },
+            tooltips: {
+                callbacks: {
+                    label: function (item, data) {
+                        var lbl = data.labels[item.index];
+                        var val = data.datasets[0].data[item.index];
+                        return ' ' + lbl + ': ' + val + ' terjual';
+                    }
+                }
             }
-
-            // 
-            $('#dataTotalOmzet').html(response.total_omzet);
-            $('#dataTotalTransaksi').html(response.total_transaksi);
-            $('#dataTotalTerjual').html(response.barang_terjual);
-            toastSuccess(response.pesan);
-
-
-          }, error: function (error) {
-            toastError("Oops! Silahkan coba lagi!");
-          }, complete: function () {
-            $('#btnHitungPenjualan').attr('disabled',false);
-            $('#btnHitungPenjualan').html(btnDef);
-          }
-        });
-      }
+        }
     });
-  });
+</script>
 
-  // PROGRESSBAR
-  function animasiProgressBar_run() {
-    $('.animasiProgressBar').css('width', '100%');
-  }
-  function animasiProgressBar_stop() {
-    $('.animasiProgressBar').css('width', '0%');
-  }
-    
-  function trimText(text) {
-    const maxLength = 30; // Jumlah huruf maksimal
-    if (text.length > maxLength) {
-        return text.substring(0, maxLength) + '..'; // Mengganti dengan teks yang diakhiri elipsis
+{{-- TABEL DETAIL & REKAP (khusus admin) --}}
+<script>
+    $(document).ready(function () {
+        if (!IS_ADMIN) return; // route detail/rekap admin-only
+        var tabel = $("#tabel_detail_pembelian").DataTable({
+            dom: 'lrtip',
+            order: [[2, 'DESC']],
+            lengthMenu: [[10, 25, 50, 100, 500], [10, 25, 50, 100, 500]],
+            autoWidth: false,
+            language: {
+                "sProcessing":"Sedang memproses...","sLengthMenu":"Tampilkan _MENU_ entri","sZeroRecords":"Tidak ditemukan data yang sesuai",
+                "loadingRecords":"Memuat data, mohon tunggu ...","sInfo":"Total : <b>_TOTAL_</b> entri","sInfoEmpty":"Menampilkan : <b>0</b> entri",
+                "sInfoFiltered":"","sSearch":"Cari : ",
+                "oPaginate":{"sFirst":"Pertama","sPrevious":"<i class='ti ti-chevron-left'></i>","sNext":"<i class='ti ti-chevron-right'></i>","sLast":"Terakhir"}
+            },
+            serverSide: true,
+            ajax: {
+                url: "{{ route('tabel_detail_pembelian') }}", type: 'GET',
+                data: function (d) {
+                    d.tgl_mulai = $('#cariTanggalMulai').val();
+                    d.tgl_selesai = $('#cariTanggalSelesai').val();
+                }
+            },
+            columns: [
+                {
+                    data: 'nama_barang',
+                    render: function (d, t, row) {
+                        return `<h6 class="fw-semibold mb-0 fs-4">${escapeHtml(d)}</h6><span class="badge bg-light-primary text-primary">${escapeHtml(row.satuan)}</span>`;
+                    }
+                },
+                { data: 'id_transaksi', render: function (d) { return `<span class="fw-semibold">${escapeHtml(trimText(d))}</span>`; } },
+                { data: 'created_at', render: function (d, t, row) { return `<span class="text-muted">${escapeHtml(row.formatted_date)}</span>`; } },
+                { data: 'qty', className: 'text-center', render: function (d) { return `<b>${d}</b>`; } },
+                { data: 'harga', className: 'text-end', render: function (d) { return formatRupiah(d); } },
+                { data: 'total_harga', className: 'text-end', render: function (d) { return `<b class="text-danger">${formatRupiah(d)}</b>`; } },
+                { data: 'satuan', visible: false }
+            ],
+            drawCallback: function () { animasiProgressBar_stop(); }
+        });
+
+        // PENCARIAN (kolom: 0 nama, 1 id, 2 tanggal, 3 qty, 5 total, 6 satuan)
+        var tN=null,tI=null,tQ=null,tT=null;
+        $('#cariNamaBarang').on('input', function () {
+            clearTimeout(tN); tN = setTimeout(function () { animasiProgressBar_run(); tabel.column(0).search($('#cariNamaBarang').val()).draw(); }, 500);
+        });
+        $('#cariIdTransaksi').on('input', function () {
+            $(this).val($(this).val().toUpperCase());
+            clearTimeout(tI); tI = setTimeout(function () { animasiProgressBar_run(); tabel.column(1).search($('#cariIdTransaksi').val()).draw(); }, 500);
+        });
+        $('#cariQty').on('input', function () {
+            clearTimeout(tQ); tQ = setTimeout(function () { animasiProgressBar_run(); tabel.column(3).search($('#cariQty').val()).draw(); }, 500);
+        });
+        $('#cariTotalHarga').on('input', function () {
+            clearTimeout(tT); tT = setTimeout(function () { animasiProgressBar_run(); tabel.column(5).search($('#cariTotalHarga').val()).draw(); }, 500);
+        });
+        // RENTANG TANGGAL: validasi min/max + filter tabel
+        $('#cariTanggalMulai').on('change', function () {
+            $('#cariTanggalSelesai').attr('min', this.value || '');
+            var s = $('#cariTanggalSelesai').val();
+            if (s && this.value && s < this.value) { $('#cariTanggalSelesai').val(''); }
+            resetKPI(); animasiProgressBar_run(); tabel.draw();
+        });
+        $('#cariTanggalSelesai').on('change', function () {
+            $('#cariTanggalMulai').attr('max', this.value || '');
+            var m = $('#cariTanggalMulai').val();
+            if (m && this.value && m > this.value) { $('#cariTanggalMulai').val(''); }
+            resetKPI(); animasiProgressBar_run(); tabel.draw();
+        });
+    });
+
+    function resetKPI() {
+        $('#dataTotalOmzet').html('Rp 0');
+        $('#dataTotalTransaksi').html('0');
+        $('#dataTotalTerjual').html('0');
     }
-    return text;
-  } 
-  function formatRupiah(angka) {
-      angka = Math.floor(angka); // Menghilangkan angka desimal
-      const reverse = angka.toString().split('').reverse().join('');
-      let ribuan = reverse.match(/\d{1,3}/g);
-      ribuan = ribuan.join('.').split('').reverse().join('');
-      return 'Rp ' + ribuan;
-  }
+
+    // HITUNG PENJUALAN
+    $(document).on('click', '#btnHitungPenjualan', function () {
+        var btnDef = $(this).html();
+        var mulai = $('#cariTanggalMulai').val();
+        var selesai = $('#cariTanggalSelesai').val();
+        if (mulai === '' || selesai === '') { return toastError("Pilih tanggal mulai & selesai!"); }
+        if (mulai > selesai) { return toastError("Tanggal mulai tidak boleh setelah tanggal selesai!"); }
+        customConfirm("Hitung penjualan ?", "Data dihitung berdasarkan rentang tanggal.").then((confirmed) => {
+            if (!confirmed) return;
+            $('#btnHitungPenjualan').attr('disabled', true).html('Memproses ..');
+            $.ajax({
+                type: "GET", url: "{{ route('hitung_data_pembelian') }}", data: { tanggal_mulai: mulai, tanggal_selesai: selesai }, dataType: "JSON",
+                success: function (response) {
+                    if (response.kode == 404) { toastError(response.pesan); return; }
+                    $('#dataTotalOmzet').html(response.total_omzet);
+                    $('#dataTotalTransaksi').html(response.total_transaksi);
+                    $('#dataTotalTerjual').html(response.barang_terjual);
+                    toastSuccess(response.pesan);
+                },
+                error: function () { toastError("Oops! Silahkan coba lagi!"); },
+                complete: function () { $('#btnHitungPenjualan').attr('disabled', false).html(btnDef); }
+            });
+        });
+    });
 </script>
 
 @endsection

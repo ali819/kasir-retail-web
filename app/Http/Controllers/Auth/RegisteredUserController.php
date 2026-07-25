@@ -17,19 +17,31 @@ class RegisteredUserController extends Controller
 {
     /**
      * Display the registration view.
+     * Register hanya terbuka bila belum ada user sama sekali (admin pertama).
      */
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
+        if (User::count() > 0) {
+            return redirect()->route('login')
+                ->with('status', 'Registrasi ditutup. Akun dibuat oleh admin melalui menu Kelola User.');
+        }
+
         return view('auth.register');
     }
 
     /**
      * Handle an incoming registration request.
+     * Registrasi pertama otomatis menjadi admin; setelah ada user, diblokir.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
+        // blokir registrasi bila sudah ada user (admin sudah dibuat)
+        if (User::count() > 0) {
+            abort(403, 'Registrasi ditutup. Akun baru dibuat oleh admin melalui menu Kelola User.');
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
@@ -40,6 +52,7 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => User::ROLE_ADMIN, // user pertama = admin
         ]);
 
         event(new Registered($user));
