@@ -737,7 +737,7 @@
         if (!pelSuggestItems.length) return;
         if (e.key === 'ArrowDown') { e.preventDefault(); pelActive = Math.min(pelActive + 1, pelSuggestItems.length - 1); updatePelActive(); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); pelActive = Math.max(pelActive - 1, 0); updatePelActive(); }
-        else if (e.key === 'Enter') { if (pelActive >= 0 && pelSuggestItems[pelActive]) { e.preventDefault(); pickPelanggan(pelSuggestItems[pelActive]); } }
+        else if (e.key === 'Enter' && !e.shiftKey) { if (pelActive >= 0 && pelSuggestItems[pelActive]) { e.preventDefault(); pickPelanggan(pelSuggestItems[pelActive]); } }
         else if (e.key === 'Escape') { hidePelSuggest(); }
     });
     // klik saran (mousedown supaya menang dari blur)
@@ -798,6 +798,7 @@
             { k: ['Shift', 'Enter'], label: 'Tambah produk' },
             { k: ['Shift', 'K'], label: 'Buka keranjang' },
             { k: ['Shift', 'B'], label: 'Langsung ke pembayaran' },
+            { k: ['Shift', 'F'], label: 'Layar penuh' },
         ]},
         satuan: { title: 'Pilih Satuan', items: [
             { k: ['←', '→'], label: 'Pindah satuan' },
@@ -817,8 +818,8 @@
             { k: ['Shift', 'U'], label: 'Uang bayar (←/→ pilih, Enter)' },
             { k: ['Shift', 'N'], label: 'Ketik nominal manual' },
             { k: ['Shift', 'D'], label: 'Diskon (←/→ pilih, Enter)' },
-            { k: ['Shift', 'P'], label: 'Pilih pelanggan' },
-            { k: ['Enter'], label: 'Konfirmasi & cetak' },
+            { k: ['Shift', 'P'], label: 'Pilih pelanggan ↓/↑ Enter' },
+            { k: ['Shift', 'Enter'], label: 'Konfirmasi & cetak' },
             { k: ['Esc'], label: 'Keluar mode / batal' },
         ]},
     };
@@ -1018,6 +1019,7 @@
             }
             else if (shift && key === 'k') { e.preventDefault(); if (cart.length) { renderCart(); $('#ModalKeranjang').modal('show'); } else { toastError('Keranjang kosong!'); } }
             else if (shift && key === 'b') { e.preventDefault(); if (cart.length) { $('#btnLanjutBayar').trigger('click'); } else { toastError('Keranjang kosong!'); } }
+            else if (shift && key === 'f') { e.preventDefault(); if (typeof toggleFullscreen === 'function') { toggleFullscreen(); } }
             return;
         }
         if (st === 'satuan') {
@@ -1047,6 +1049,9 @@
         }
         if (st === 'bayar') {
             var inPel = document.activeElement && document.activeElement.id === 'inputPembeli';
+
+            // Shift+Enter = konfirmasi & cetak — berfungsi dari mana pun (termasuk saat fokus di field pelanggan / dalam mode)
+            if (shift && key === 'enter') { e.preventDefault(); $('#btnKonfirmasiBayar').trigger('click'); return; }
 
             // sedang dalam mode (diskon/uang): panah pilih, Enter pakai, Esc keluar
             if (bayarMode) {

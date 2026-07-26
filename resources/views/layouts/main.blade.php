@@ -358,6 +358,13 @@
                         Data Profil&emsp;<i class="ti ti-chevron-right fs-7"></i>&emsp;Detail&emsp;<i class="ti ti-chevron-right fs-7"></i>
                     </a>
                 <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-center">
+                  <li class="nav-item me-2">
+                    <a class="nav-link p-0" href="javascript:void(0)" id="btnFullscreen" title="Layar penuh" aria-label="Layar penuh">
+                      <div class="d-flex align-items-center justify-content-center rounded-circle bg-light-primary text-primary" style="width:38px;height:38px;">
+                        <i class="ti ti-maximize fs-5" id="fullscreenIcon"></i>
+                      </div>
+                    </a>
+                  </li>
                   <li class="nav-item dropdown">
                     <a class="nav-link pe-0" href="javascript:void(0)" id="drop1" data-bs-toggle="dropdown" aria-expanded="false">
                       <div class="d-flex align-items-center">
@@ -467,6 +474,26 @@
         $(document).on('keydown', '#sidebarSearch', function (e) {
           if (e.key === 'Escape') { $(this).val('').trigger('input'); }
         });
+
+        // ===== LAYAR PENUH (Fullscreen API) =====
+        function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement); }
+        function toggleFullscreen() {
+          if (!isFullscreen()) {
+            var el = document.documentElement;
+            var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+            if (req) { req.call(el); }
+          } else {
+            var exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+            if (exit) { exit.call(document); }
+          }
+        }
+        function syncFullscreenIcon() {
+          var ic = document.getElementById('fullscreenIcon');
+          if (ic) { ic.className = (isFullscreen() ? 'ti ti-minimize' : 'ti ti-maximize') + ' fs-5'; }
+        }
+        document.addEventListener('fullscreenchange', syncFullscreenIcon);
+        document.addEventListener('webkitfullscreenchange', syncFullscreenIcon);
+        $(document).on('click', '#btnFullscreen', function (e) { e.preventDefault(); toggleFullscreen(); });
 
         $(document).on('click','.btnModalPrinter', function() {
           $('#ModalPengaturanPrinter').modal('show');
