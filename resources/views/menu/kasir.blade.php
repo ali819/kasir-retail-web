@@ -34,23 +34,20 @@
     .btn-quick-pay { min-width: 90px; font-weight: 600; }
 </style>
 
-{{-- Select2 (dropdown pelanggan searchable) --}}
-<link rel="stylesheet" href="{{ asset('template/dist/libs/select2/dist/css/select2.min.css') }}">
-<script src="{{ asset('template/dist/libs/select2/dist/js/select2.full.min.js') }}"></script>
+{{-- Autocomplete pelanggan (custom, dark/light aware) — drop-up biar aman dari keyboard --}}
 <style>
-    /* samakan tinggi select2 dengan input bootstrap + dukung dark mode */
-    .select2-container { width: 100% !important; }
-    .select2-container--default .select2-selection--single { height: 38px; padding: 0.375rem 0.75rem; border-color: #ced4da; }
-    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.5; padding-left: 0; padding-right: 2.2rem; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; top: 1px; right: 0.5rem; }
-    /* tombol clear (×) tetap sebaris & tak menabrak teks */
-    .select2-container--default .select2-selection--single .select2-selection__clear { position: absolute; right: 1.6rem; top: 50%; transform: translateY(-50%); margin: 0; padding: 0; font-size: 18px; line-height: 1; color: #99a1b7; }
-    [data-bs-theme="dark"] .select2-container--default .select2-selection--single { background-color: #1b1f2a; border-color: #2e3440; }
-    [data-bs-theme="dark"] .select2-selection__rendered { color: #e6e9f0 !important; }
-    [data-bs-theme="dark"] .select2-dropdown { background-color: #232733; border-color: #2e3440; }
-    [data-bs-theme="dark"] .select2-results__option { color: #e6e9f0; }
-    [data-bs-theme="dark"] .select2-search__field { background-color: #1b1f2a; color: #e6e9f0; border-color: #2e3440; }
-    [data-bs-theme="dark"] .select2-results__option--highlighted { background-color: #2b3450 !important; }
+    .ac-suggest { position: absolute; left: 0; right: 0; bottom: calc(100% + 5px); z-index: 1060; background: #fff; border: 1px solid #e5e9f2; border-radius: 12px; box-shadow: 0 10px 28px rgba(19,30,55,.15); max-height: 224px; overflow-y: auto; padding: 5px; }
+    .ac-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 11px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #2a3547; }
+    .ac-item + .ac-item { margin-top: 2px; }
+    .ac-item:hover, .ac-item.active { background: #f2f5ff; }
+    .ac-item .ac-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ac-item .ac-telp { color: #99a1b7; font-size: 12px; flex-shrink: 0; }
+    .ac-empty { padding: 12px; text-align: center; color: #99a1b7; font-size: 13px; }
+    [data-bs-theme="dark"] .ac-suggest { background: #232733; border-color: #2e3440; box-shadow: 0 10px 28px rgba(0,0,0,.55); }
+    [data-bs-theme="dark"] .ac-item { color: #e6e9f0; }
+    [data-bs-theme="dark"] .ac-item:hover, [data-bs-theme="dark"] .ac-item.active { background: #2b3450; }
+    [data-bs-theme="dark"] .ac-item .ac-telp { color: #8891a5; }
+    [data-bs-theme="dark"] .ac-empty { color: #8891a5; }
 </style>
 
 {{-- MAIN --}}
@@ -88,8 +85,60 @@
     </div>
 </div>
 
+{{-- FAST HAND: panel pintasan keyboard (context-aware, menutup sidebar saat aktif) --}}
+<style>
+    #fastHandPanel { position: fixed; top: 0; left: 0; width: 270px; height: 100vh; z-index: 1052; background: #fff; border-right: 1px solid #eaeef4; box-shadow: 6px 0 28px rgba(19,30,55,.12); transform: translateX(-100%); transition: transform .22s ease; overflow-y: auto; padding: 18px 16px 26px; }
+    #fastHandPanel.open { transform: translateX(0); }
+    #fastHandPanel .fh-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+    #fastHandPanel .fh-title { font-weight: 700; font-size: 18px; color: #2a3547; display: flex; align-items: center; gap: 7px; }
+    #fastHandPanel .fh-title i { color: #ffb800; }
+    #fastHandPanel .fh-x { border: 0; background: transparent; color: #99a1b7; font-size: 20px; line-height: 1; cursor: pointer; padding: 4px; border-radius: 8px; }
+    #fastHandPanel .fh-x:hover { background: #f2f5ff; color: #2a3547; }
+    #fastHandPanel .fh-sub { font-size: 12px; color: #99a1b7; margin-bottom: 14px; }
+    #fastHandPanel .fh-sub span { color: #5d87ff; font-weight: 600; }
+    #fastHandPanel .fh-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed #eef1f6; }
+    #fastHandPanel .fh-keys { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    #fastHandPanel .fh-label { font-size: 13px; color: #2a3547; }
+    #fastHandPanel .fh-foot { margin-top: 16px; font-size: 11px; color: #99a1b7; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .fh-kbd { display: inline-block; min-width: 22px; text-align: center; padding: 2px 7px; font-size: 12px; font-weight: 600; font-family: inherit; color: #2a3547; background: #f4f6fb; border: 1px solid #dfe4ee; border-bottom-width: 2px; border-radius: 6px; line-height: 1.4; }
+    .fh-plus { color: #b6bcc9; font-size: 11px; }
+    [data-bs-theme="dark"] #fastHandPanel { background: #232733; border-right-color: #2e3440; box-shadow: 6px 0 28px rgba(0,0,0,.5); }
+    [data-bs-theme="dark"] #fastHandPanel .fh-title { color: #e6e9f0; }
+    [data-bs-theme="dark"] #fastHandPanel .fh-x:hover { background: #2b3450; color: #e6e9f0; }
+    [data-bs-theme="dark"] #fastHandPanel .fh-row { border-bottom-color: #2e3440; }
+    [data-bs-theme="dark"] #fastHandPanel .fh-label { color: #e6e9f0; }
+    [data-bs-theme="dark"] .fh-kbd { background: #1b1f2a; border-color: #3a4152; color: #e6e9f0; }
+    /* highlight border item keranjang yang difokus & item terpilih di pembayaran */
+    .fh-target { outline: 2px solid #5d87ff; outline-offset: 2px; border-radius: 8px; background: #f2f6ff; }
+    .fh-hl { outline: 2px solid #5d87ff !important; outline-offset: 2px; }
+    /* status dinamis di panel (item/mode yang sedang difokus) */
+    #fastHandPanel .fh-status { display: none; margin-bottom: 12px; padding: 10px 11px; border-radius: 9px; background: #eef3ff; border: 1px solid #d7e2ff; font-size: 13px; color: #2a3547; }
+    #fastHandPanel .fh-status.show { display: block; }
+    #fastHandPanel .fh-status b { color: #3f6bff; }
+    #fastHandPanel .fh-status .fh-status-q { font-size: 12px; color: #6b7385; }
+    [data-bs-theme="dark"] .fh-target { background: #23314f; }
+    [data-bs-theme="dark"] #fastHandPanel .fh-status { background: #23314f; border-color: #2f4372; color: #e6e9f0; }
+    [data-bs-theme="dark"] #fastHandPanel .fh-status .fh-status-q { color: #9aa3b8; }
+    /* saat panel Keyboard Cepat terbuka, geser modal ke kanan agar tak tertutup panel & enak dilihat */
+    body.fh-panel-open .modal { padding-left: 270px !important; }
+    @media (max-width: 767px) {
+        #fastHandPanel { width: 84%; max-width: 320px; }
+        body.fh-panel-open .modal { padding-left: 0 !important; }
+    }
+</style>
+<div id="fastHandPanel" aria-hidden="true">
+    <div class="fh-head">
+        <div class="fh-title"><i class="ti ti-keyboard"></i> Keyboard Cepat</div>
+        <button type="button" class="fh-x" id="fhClose" aria-label="Tutup"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="fh-sub">Pintasan: <span id="fhStateName">Layar Kasir</span></div>
+    <div id="fhStatus" class="fh-status"></div>
+    <div id="fhRows"></div>
+    <div class="fh-foot"><kbd class="fh-kbd">Shift</kbd><span class="fh-plus">+</span><kbd class="fh-kbd">H</kbd> &nbsp;buka / tutup panel</div>
+</div>
+
 {{-- FLOATING KERANJANG --}}
-<button type="button" class="btn btn-primary fab-cart" id="fabKeranjang" style="display:none;">
+<button type="button" class="btn btn-primary fab-cart btn-lg" id="fabKeranjang" style="display:none;">
     <i class="ti ti-shopping-cart fs-5"></i>
     <span class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle" id="fabCount">0</span>
     <span class="ms-2 fw-bold" id="fabTotal">Rp 0</span>
@@ -150,38 +199,47 @@
 
 {{-- MODAL BAYAR --}}
 <div class="modal fade" id="ModalBayar" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title"><i class="ti ti-cash"></i>&nbsp; Pembayaran</h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="p-3 rounded mb-3 bayar-box-total">
-                    <div class="d-flex justify-content-between align-items-center"><span class="fs-3">Subtotal</span><span class="fw-semibold fs-4" id="bayarSubtotal">Rp 0</span></div>
-                    <div class="d-flex justify-content-between align-items-center mt-1" id="bayarDiskonRow" hidden><span class="fs-3">Diskon <small class="text-muted" id="bayarDiskonNama"></small></span><span class="fw-semibold fs-4 text-success" id="bayarDiskonNilai">- Rp 0</span></div>
-                    <hr class="my-2" style="opacity:.35;">
-                    <div class="d-flex justify-content-between align-items-center"><span class="fs-3 fw-semibold">Total Bayar</span><h2 class="mb-0 fw-bold text-danger" id="bayarTotal">Rp 0</h2></div>
-                </div>
-                <div id="diskonWrap" class="mb-3" hidden>
-                    <label class="mb-1 fs-3"><b>Diskon</b> <span class="text-muted">(klik untuk pakai)</span></label>
-                    <div id="diskonBadges" class="d-flex flex-wrap gap-2"></div>
-                </div>
-                <label class="mb-1 fs-3"><b>Uang Bayar</b></label>
-                <div id="quickPay" class="d-flex flex-wrap gap-2 mb-2"></div>
-                <input type="text" inputmode="numeric" class="form-control form-control-lg input-rupiah summaryTotalBayar mb-3" placeholder="Nominal bayar ..">
-                <div class="p-3 rounded mb-3 bayar-box-kembali">
-                    <p class="mb-0 fs-3">Kembalian</p>
-                    <h3 class="mb-0 fw-bold text-success summaryKembalian" data-kembalian="0">Rp 0</h3>
-                </div>
-                <label class="mb-1 fs-3"><b>Pelanggan</b> <span class="text-muted">(opsional)</span></label>
-                <div class="d-flex gap-2 align-items-start">
-                    <div class="flex-grow-1" style="min-width:0;">
-                        <select class="form-control" id="selectPembeli" style="width:100%;"></select>
+                <div class="row g-3">
+                    {{-- KOLOM KIRI: tagihan & diskon --}}
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded mb-3 bayar-box-total">
+                            <div class="d-flex justify-content-between align-items-center"><span class="fs-3">Subtotal</span><span class="fw-semibold fs-4" id="bayarSubtotal">Rp 0</span></div>
+                            <div class="d-none justify-content-between align-items-center mt-1" id="bayarDiskonRow"><span class="fs-3">Diskon <small class="text-muted" id="bayarDiskonNama"></small></span><span class="fw-semibold fs-4 text-success" id="bayarDiskonNilai">- Rp 0</span></div>
+                            <hr class="my-2" style="opacity:.35;">
+                            <div class="d-flex justify-content-between align-items-center"><span class="fs-3 fw-semibold">Total Bayar</span><h2 class="mb-0 fw-bold text-danger" id="bayarTotal">Rp 0</h2></div>
+                        </div>
+                        <div id="diskonWrap" hidden>
+                            <label class="mb-1 fs-3"><b>Diskon</b> <span class="text-muted">(klik untuk pakai)</span></label>
+                            <div id="diskonBadges" class="d-flex flex-wrap gap-2"></div>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-outline-primary flex-shrink-0 d-flex align-items-center justify-content-center" id="btnAddPelanggan" title="Tambah pelanggan baru" style="height:38px; width:42px;"><i class="ti ti-user-plus"></i></button>
+                    {{-- KOLOM KANAN: pembayaran, kembalian & pelanggan --}}
+                    <div class="col-12 col-md-6">
+                        <label class="mb-1 fs-3"><b>Uang Bayar</b></label>
+                        <div id="quickPay" class="d-flex flex-wrap gap-2 mb-2"></div>
+                        <input type="text" inputmode="numeric" class="form-control form-control-lg input-rupiah summaryTotalBayar mb-3" placeholder="Nominal bayar ..">
+                        <div class="p-3 rounded mb-3 bayar-box-kembali">
+                            <p class="mb-0 fs-3">Kembalian</p>
+                            <h3 class="mb-0 fw-bold text-success summaryKembalian" data-kembalian="0">Rp 0</h3>
+                        </div>
+                        <label class="mb-1 fs-3"><b>Pelanggan</b> <span class="text-muted">(opsional)</span></label>
+                        <div class="d-flex gap-2 align-items-start">
+                            <div class="flex-grow-1 position-relative" id="pembeliWrap" style="min-width:0;">
+                                <input type="text" class="form-control" id="inputPembeli" placeholder="Umum / ketik nama pelanggan.." autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false">
+                                <div id="pembeliSuggest" class="ac-suggest" hidden></div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary flex-shrink-0 d-flex align-items-center justify-content-center" id="btnAddPelanggan" title="Tambah pelanggan baru" style="height:38px; width:42px;"><i class="ti ti-user-plus"></i></button>
+                        </div>
+                        <small class="text-muted">Nama harus sesuai data <b>Kelola Pelanggan</b>.</small>
+                    </div>
                 </div>
-                <small class="text-muted">Kosongkan untuk pembeli umum. Data diambil dari <b>Kelola Pelanggan</b>.</small>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Batal</button>
@@ -416,7 +474,7 @@
         var html = '';
         cart.forEach(function (c, i) {
             var thumb = c.gambar_url ? `<img src="${c.gambar_url}" class="cart-thumb">` : `<span class="cart-thumb d-inline-flex align-items-center justify-content-center text-muted"><i class="ti ti-photo"></i></span>`;
-            html += `<div class="d-flex align-items-center gap-2 border-bottom py-2">
+            html += `<div class="d-flex align-items-center gap-2 border-bottom py-2 cart-row" data-key="${escapeHtml(cartKey(c.id_barang, c.satuan))}">
                 ${thumb}
                 <div class="flex-grow-1" style="min-width:0;">
                     <div class="fw-semibold text-truncate">${escapeHtml(c.nama_barang)}</div>
@@ -434,6 +492,7 @@
         });
         box.html(html);
         $('#cartTotal').text(formatRupiah(cartTotal()));
+        if (typeof applyCartTarget === 'function') { applyCartTarget(); } // pertahankan highlight target Shortcut
     }
     $(document).on('click', '#fabKeranjang', function () { renderCart(); $('#ModalKeranjang').modal('show'); });
     $(document).on('click', '.cart-minus', function () { var i = $(this).data('i'); cart[i].qty = Math.max(1, parseFloat(cart[i].qty) - 1); renderCart(); updateFab(); });
@@ -491,11 +550,11 @@
         var tot = sub - pot;
         $('#bayarSubtotal').text(formatRupiah(sub));
         if (pot > 0 && selectedDiskon) {
-            $('#bayarDiskonRow').removeAttr('hidden');
+            $('#bayarDiskonRow').removeClass('d-none').addClass('d-flex');
             $('#bayarDiskonNama').text(selectedDiskon.tipe === 'persen' ? '(' + selectedDiskon.nilai + '%)' : '');
             $('#bayarDiskonNilai').text('- ' + formatRupiah(pot));
         } else {
-            $('#bayarDiskonRow').attr('hidden', true);
+            $('#bayarDiskonRow').removeClass('d-flex').addClass('d-none');
         }
         $('#bayarTotal').text(formatRupiah(tot));
         renderQuickPay(tot);
@@ -508,7 +567,7 @@
         selectedDiskon = null;
         $('.summaryTotalBayar').val('');
         $('.summaryKembalian').text('Rp 0').attr('data-kembalian', 0);
-        $('#selectPembeli').val(null).trigger('change');
+        $('#inputPembeli').val(''); hidePelSuggest();
         renderDiskonBadges();
         refreshBayar();
         $('#ModalBayar').modal('show');
@@ -524,7 +583,7 @@
         var html = '';
         arr.forEach(function (v) {
             var isPas = (v === total);
-            html += `<button type="button" class="btn ${isPas ? 'btn-success' : 'btn-outline-primary'} btn-quick-pay flex-grow-1" data-nominal="${v}">${isPas ? 'Uang Pas' : formatRupiah(v)}</button>`;
+            html += `<button type="button" class="btn ${isPas ? 'btn-outline-success' : 'btn-outline-primary'} btn-quick-pay flex-grow-1" data-nominal="${v}">${isPas ? 'Uang Pas' : formatRupiah(v)}</button>`;
         });
         wrap.html(html);
     }
@@ -546,65 +605,149 @@
         var bayar = rupiahToInt($('.summaryTotalBayar').val());
         if (bayar < 1) return toastError("Uang bayar kosong!");
         if (bayar < total) return toastError("Uang bayar kurang dari total!");
-        // pelanggan terpilih (select2)
-        var selData = $('#selectPembeli').select2('data');
-        var id_pelanggan = (selData && selData.length && selData[0].id) ? selData[0].id : '';
-        var pembeli = (selData && selData.length && selData[0].id) ? (selData[0].nama || selData[0].text) : '';
-        var id_diskon = selectedDiskon ? selectedDiskon.id : '';
-        var kembalian = bayar - total;
-        var dynamicTabelBelanja = cart.map(function (c) {
-            return { id_barang: c.id_barang, nama_barang: c.nama_barang, satuan: c.satuan, total_qty: c.qty, harga: c.harga, total_harga: c.harga * c.qty };
-        });
-        customConfirm("Konfirmasi pembelian ?", "Pastikan pembayaran sudah benar.").then(function (confirmed) {
-            if (!confirmed) return;
-            var btnDef = $('#btnKonfirmasiBayar').html();
-            $('#btnKonfirmasiBayar').html('Memproses ..').attr('disabled', true);
-            $.ajax({
-                type: "POST", url: "{{ route('konfirmasi_pembelian_barang') }}",
-                data: { _token: "{{ csrf_token() }}", dynamicTabelBelanja: dynamicTabelBelanja, total_bayar: bayar, pembeli: pembeli, id_pelanggan: id_pelanggan, id_diskon: id_diskon },
-                dataType: "JSON",
-                success: function (response) {
-                    if (response.kode == 200) {
-                        qzPrintNota(response.raw_data);
-                        cart = []; updateFab(); renderCart();
-                        $('#ModalBayar').modal('hide');
-                        toastSuccess("Transaksi berhasil!");
-                        reloadProduk();
-                        document.getElementById('inputBarcode').focus();
-                    } else { toastError(response.pesan); }
-                },
-                error: function () { toastError("Oops! Terjadi kesalahan. Silahkan coba lagi!"); },
-                complete: function () { $('#btnKonfirmasiBayar').html(btnDef).attr('disabled', false); }
+
+        // validasi pelanggan: kosong = Umum; jika diisi harus PERSIS nama pelanggan terdaftar
+        var namaPembeli = $('#inputPembeli').val().trim();
+        resolvePelanggan(namaPembeli, function (ok, id_pelanggan, pembeli) {
+            if (!ok) {
+                return toastError('Nama pelanggan "' + namaPembeli + '" tidak terdaftar. Pilih dari saran atau tambah lewat tombol +.');
+            }
+            var id_diskon = selectedDiskon ? selectedDiskon.id : '';
+            var dynamicTabelBelanja = cart.map(function (c) {
+                return { id_barang: c.id_barang, nama_barang: c.nama_barang, satuan: c.satuan, total_qty: c.qty, harga: c.harga, total_harga: c.harga * c.qty };
+            });
+            customConfirm("Konfirmasi ?", "Pastikan pembayaran sudah benar.").then(function (confirmed) {
+                if (!confirmed) return;
+                var btnDef = $('#btnKonfirmasiBayar').html();
+                $('#btnKonfirmasiBayar').html('Memproses ..').attr('disabled', true);
+                $.ajax({
+                    type: "POST", url: "{{ route('konfirmasi_pembelian_barang') }}",
+                    data: { _token: "{{ csrf_token() }}", dynamicTabelBelanja: dynamicTabelBelanja, total_bayar: bayar, pembeli: pembeli, id_pelanggan: id_pelanggan, id_diskon: id_diskon },
+                    dataType: "JSON",
+                    success: function (response) {
+                        if (response.kode == 200) {
+                            qzPrintNota(response.raw_data);
+                            cart = []; updateFab(); renderCart();
+                            $('#ModalBayar').modal('hide');
+                            toastSuccess("Transaksi berhasil!");
+                            reloadProduk();
+                            document.getElementById('inputBarcode').focus();
+                        } else { toastError(response.pesan); }
+                    },
+                    error: function () { toastError("Oops! Terjadi kesalahan. Silahkan coba lagi!"); },
+                    complete: function () { $('#btnKonfirmasiBayar').html(btnDef).attr('disabled', false); }
+                });
             });
         });
     });
 </script>
 
 <script>
-    // ================= PELANGGAN (Select2 searchable) =================
-    $(function () {
-        $('#selectPembeli').select2({
-            theme: 'default',
-            width: '100%',
-            placeholder: 'Umum / cari pelanggan..',
-            allowClear: true,
-            dropdownParent: $('#ModalBayar'),
-            minimumInputLength: 0,
-            language: {
-                inputTooShort: function () { return 'Ketik untuk mencari..'; },
-                noResults: function () { return 'Pelanggan tidak ditemukan'; },
-                searching: function () { return 'Mencari..'; }
+    // ================= PELANGGAN (autocomplete custom, drop-up) =================
+    var pelTimer = null;
+    var pelSuggestItems = [];   // hasil saran saat ini
+    var pelActive = -1;         // indeks aktif (navigasi keyboard)
+    var pelangganMap = {};      // cache: nama(lowercase) -> {id, nama}
+
+    function renderPelSuggest(items) {
+        var box = $('#pembeliSuggest');
+        pelSuggestItems = items || [];
+        pelActive = -1;
+        var html = '';
+        if (!pelSuggestItems.length) {
+            html = '<div class="ac-empty">Pelanggan tidak ditemukan</div>';
+        } else {
+            pelSuggestItems.forEach(function (p, i) {
+                var telp = p.no_telp ? escapeHtml(p.no_telp) : '';
+                html += '<div class="ac-item" data-i="' + i + '">' +
+                            '<span class="ac-name">' + escapeHtml(p.nama) + '</span>' +
+                            (telp ? '<span class="ac-telp">' + telp + '</span>' : '') +
+                        '</div>';
+            });
+        }
+        box.html(html).removeAttr('hidden');
+        $('#inputPembeli').attr('aria-expanded', 'true');
+    }
+    function hidePelSuggest() {
+        $('#pembeliSuggest').attr('hidden', true).html('');
+        pelSuggestItems = []; pelActive = -1;
+        $('#inputPembeli').attr('aria-expanded', 'false');
+    }
+    function pickPelanggan(p) {
+        pelangganMap[p.nama.toLowerCase()] = { id: p.id, nama: p.nama };
+        $('#inputPembeli').val(p.nama);
+        hidePelSuggest();
+    }
+    function cariPelanggan(q) {
+        $.ajax({
+            type: 'GET', url: "{{ route('pelanggan_search') }}",
+            data: { q: q, limit: 5 }, dataType: 'JSON',
+            success: function (data) {
+                var items = data.results || [];
+                items.forEach(function (p) { pelangganMap[p.nama.toLowerCase()] = { id: p.id, nama: p.nama }; });
+                if ($('#inputPembeli').val().trim() !== '') { renderPelSuggest(items); }
             },
-            ajax: {
-                url: "{{ route('pelanggan_search') }}",
-                dataType: 'json',
-                delay: 250,
-                data: function (params) { return { q: params.term || '' }; },
-                processResults: function (data) { return { results: data.results }; },
-                cache: true
-            }
+            error: function () { hidePelSuggest(); }
         });
+    }
+
+    // validasi pelanggan sebelum konfirmasi (kosong=Umum, isi harus cocok persis)
+    function resolvePelanggan(nama, cb) {
+        nama = (nama || '').trim();
+        if (nama === '') { return cb(true, '', ''); }
+        var found = pelangganMap[nama.toLowerCase()];
+        if (found) { return cb(true, found.id, found.nama); }
+        // fallback: verifikasi ke server (cegah salah tolak saat mengetik cepat)
+        $.ajax({
+            type: 'GET', url: "{{ route('pelanggan_search') }}",
+            data: { q: nama, limit: 5 }, dataType: 'JSON',
+            success: function (data) {
+                var match = (data.results || []).find(function (p) { return p.nama.toLowerCase() === nama.toLowerCase(); });
+                if (match) {
+                    pelangganMap[match.nama.toLowerCase()] = { id: match.id, nama: match.nama };
+                    cb(true, match.id, match.nama);
+                } else { cb(false); }
+            },
+            error: function () { cb(false); }
+        });
+    }
+
+    function updatePelActive() {
+        $('#pembeliSuggest .ac-item').removeClass('active');
+        if (pelActive >= 0) {
+            var el = $('#pembeliSuggest .ac-item[data-i="' + pelActive + '"]').addClass('active');
+            if (el.length) { el[0].scrollIntoView({ block: 'nearest' }); }
+        }
+    }
+
+    // ketik -> cari (debounce)
+    $(document).on('input', '#inputPembeli', function () {
+        var q = $(this).val().trim();
+        clearTimeout(pelTimer);
+        if (q === '') { hidePelSuggest(); return; }
+        pelTimer = setTimeout(function () { cariPelanggan(q); }, 250);
     });
+    // fokus lagi & sudah ada teks -> tampilkan saran
+    $(document).on('focus', '#inputPembeli', function () {
+        var q = $(this).val().trim();
+        if (q !== '') { clearTimeout(pelTimer); pelTimer = setTimeout(function () { cariPelanggan(q); }, 150); }
+    });
+    // navigasi keyboard (drop-up: bawah=turun indeks tetap intuitif)
+    $(document).on('keydown', '#inputPembeli', function (e) {
+        if (!pelSuggestItems.length) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); pelActive = Math.min(pelActive + 1, pelSuggestItems.length - 1); updatePelActive(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); pelActive = Math.max(pelActive - 1, 0); updatePelActive(); }
+        else if (e.key === 'Enter') { if (pelActive >= 0 && pelSuggestItems[pelActive]) { e.preventDefault(); pickPelanggan(pelSuggestItems[pelActive]); } }
+        else if (e.key === 'Escape') { hidePelSuggest(); }
+    });
+    // klik saran (mousedown supaya menang dari blur)
+    $(document).on('mousedown', '#pembeliSuggest .ac-item', function (e) {
+        e.preventDefault();
+        var i = $(this).data('i');
+        if (pelSuggestItems[i]) { pickPelanggan(pelSuggestItems[i]); }
+    });
+    // tutup saat blur (delay kecil supaya klik/tap saran tetap kebaca)
+    $(document).on('blur', '#inputPembeli', function () { setTimeout(hidePelSuggest, 150); });
 
     // tambah pelanggan cepat langsung dari layar kasir
     $(document).on('click', '#btnAddPelanggan', function () {
@@ -631,11 +774,10 @@
                 dataType: 'JSON',
                 success: function (r) {
                     if (r.kode == 200) {
-                        var opt = new Option(r.text, r.id, true, true);
-                        $('#selectPembeli').append(opt).trigger('change');
-                        // simpan nama utk dipakai saat konfirmasi
-                        var d = $('#selectPembeli').select2('data');
-                        if (d && d.length) d[0].nama = res.value.nama;
+                        // pelanggan baru langsung terpilih di input
+                        pelangganMap[res.value.nama.toLowerCase()] = { id: r.id, nama: res.value.nama };
+                        $('#inputPembeli').val(res.value.nama);
+                        hidePelSuggest();
                         toastSuccess(r.pesan);
                     } else if (r.kode == 422) { errorHandlerToast(r.pesan); }
                     else { toastError(r.pesan); }
@@ -643,6 +785,293 @@
                 error: function () { toastError("Oops! Silahkan coba lagi!"); }
             });
         });
+    });
+</script>
+
+<script>
+    // ================= FAST HAND (pintasan keyboard, context-aware) =================
+    // Isi panel & tombol keyboard menyesuaikan state kasir saat ini.
+    var FH = {
+        idle: { title: 'Layar Kasir', items: [
+            { k: ['Shift', 'S'], label: 'Fokus cari produk' },
+            { k: ['Shift', 'Q'], label: 'Fokus scan barcode' },
+            { k: ['Shift', 'Enter'], label: 'Tambah produk' },
+            { k: ['Shift', 'K'], label: 'Buka keranjang' },
+            { k: ['Shift', 'B'], label: 'Langsung ke pembayaran' },
+        ]},
+        satuan: { title: 'Pilih Satuan', items: [
+            { k: ['←', '→'], label: 'Pindah satuan' },
+            { k: ['↑', '↓'], label: 'Atur jumlah' },
+            { k: ['Enter'], label: 'Masukkan ke keranjang' },
+            { k: ['Esc'], label: 'Batal' },
+        ]},
+        keranjang: { title: 'Keranjang', items: [
+            { k: ['A…Z'], label: 'Ketik nama item untuk fokus' },
+            { k: ['Backspace'], label: 'Hapus huruf pencarian' },
+            { k: ['↑', '↓'], label: 'Tambah / kurangi jumlah' },
+            { k: ['Delete'], label: 'Hapus item terfokus' },
+            { k: ['Shift', 'Enter'], label: 'Lanjut bayar' },
+            { k: ['Esc'], label: 'Reset fokus / tutup' },
+        ]},
+        bayar: { title: 'Pembayaran', items: [
+            { k: ['Shift', 'U'], label: 'Uang bayar (←/→ pilih, Enter)' },
+            { k: ['Shift', 'N'], label: 'Ketik nominal manual' },
+            { k: ['Shift', 'D'], label: 'Diskon (←/→ pilih, Enter)' },
+            { k: ['Shift', 'P'], label: 'Pilih pelanggan' },
+            { k: ['Enter'], label: 'Konfirmasi & cetak' },
+            { k: ['Esc'], label: 'Keluar mode / batal' },
+        ]},
+    };
+    var fhOpen = false;
+
+    // state fokus keranjang (type-ahead)
+    var cartFind = '';
+    var cartTargetKey = null;
+    // state mode pembayaran
+    var bayarMode = null;   // null | 'diskon' | 'uang'
+    var bayarNavIdx = -1;
+
+    function fhState() {
+        if ($('#ModalBayar').hasClass('show')) return 'bayar';
+        if ($('#ModalKeranjang').hasClass('show')) return 'keranjang';
+        if ($('#ModalPilihSatuan').hasClass('show')) return 'satuan';
+        return 'idle';
+    }
+    function renderFastHand() {
+        var conf = FH[fhState()] || FH.idle;
+        $('#fhStateName').text(conf.title);
+        var MOD = ['Shift', 'Ctrl', 'Alt'];
+        var html = conf.items.map(function (it) {
+            // kombinasi (mis. Shift + S) pakai tanda '+'; alternatif (mis. ← →) dipisah spasi
+            var isCombo = it.k.length > 1 && MOD.indexOf(it.k[0]) !== -1;
+            var sep = isCombo ? '<span class="fh-plus">+</span>' : '';
+            var keys = it.k.map(function (k) { return '<kbd class="fh-kbd">' + escapeHtml(k) + '</kbd>'; }).join(sep);
+            return '<div class="fh-row"><div class="fh-keys">' + keys + '</div><div class="fh-label">' + escapeHtml(it.label) + '</div></div>';
+        }).join('');
+        $('#fhRows').html(html);
+        updateFhStatus();
+    }
+    // status dinamis (item keranjang terfokus / mode pembayaran)
+    function updateFhStatus() {
+        var st = fhState();
+        var $s = $('#fhStatus');
+        if (st === 'keranjang' && (cartFind || cartTargetKey)) {
+            var item = cartTargetKey ? cart.find(function (c) { return cartKey(c.id_barang, c.satuan) === cartTargetKey; }) : null;
+            if (item) {
+                $s.html('Fokus: <b>' + escapeHtml(item.nama_barang) + '</b> <span class="fh-status-q">(' + escapeHtml(item.satuan) + ' × ' + item.qty + ')</span>').addClass('show');
+            } else {
+                $s.html('Cari: <b>"' + escapeHtml(cartFind) + '"</b> <span class="fh-status-q">— tak ada yang cocok</span>').addClass('show');
+            }
+        } else if (st === 'bayar' && bayarMode) {
+            var lbl = bayarMode === 'diskon' ? 'Mode Diskon' : 'Mode Uang Bayar';
+            $s.html('<b>' + lbl + '</b> <span class="fh-status-q">— ←/→ pilih · Enter pakai · Esc keluar</span>').addClass('show');
+        } else {
+            $s.removeClass('show').html('');
+        }
+    }
+    function openFastHand() { fhOpen = true; renderFastHand(); $('#fastHandPanel').addClass('open').attr('aria-hidden', 'false'); $('body').addClass('fh-panel-open'); }
+    function closeFastHand() { fhOpen = false; $('#fastHandPanel').removeClass('open').attr('aria-hidden', 'true'); $('body').removeClass('fh-panel-open'); }
+    function toggleFastHand() { fhOpen ? closeFastHand() : openFastHand(); }
+
+    $(document).on('click', '#btnFastHand', function (e) { e.preventDefault(); toggleFastHand(); });
+    $(document).on('click', '#fhClose', function () { closeFastHand(); });
+    // panel ikut berubah saat modal buka/tutup; reset state saat modal ditutup
+    $('#ModalPilihSatuan, #ModalKeranjang, #ModalBayar').on('shown.bs.modal hidden.bs.modal', function () { if (fhOpen) renderFastHand(); });
+    $('#ModalKeranjang').on('shown.bs.modal hidden.bs.modal', function () { fhResetCartTarget(); updateFhStatus(); });
+    $('#ModalBayar').on('shown.bs.modal hidden.bs.modal', function () { fhBayarExit(); });
+
+    function fhSwalOpen() { return !!document.querySelector('.swal2-container'); }
+    function fhIsText(el) {
+        if (!el) return false;
+        if (el.isContentEditable) return true;
+        if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA') return false;
+        var t = (el.type || 'text').toLowerCase();
+        return ['text', 'search', 'number', 'tel', 'email', 'password', 'url'].indexOf(t) !== -1;
+    }
+    function fhSwitchSatuan(dir) {
+        var $r = $('.ps-harga');
+        if (!$r.length) return;
+        var i = $r.index($('.ps-harga:checked'));
+        if (i < 0) i = 0;
+        var n = ($r.length + i + dir) % $r.length;
+        $r.eq(n).prop('checked', true).trigger('change');
+    }
+
+    // ---------- KERANJANG: fokus item lewat type-ahead ----------
+    function fhResetCartTarget() { cartFind = ''; cartTargetKey = null; $('#cartItems .cart-row').removeClass('fh-target'); }
+    function fhCartMatch(buffer) {
+        var q = (buffer || '').toLowerCase().trim();
+        if (!q) return null;
+        var m = cart.find(function (c) { return (c.nama_barang || '').toLowerCase().indexOf(q) !== -1; });
+        return m ? cartKey(m.id_barang, m.satuan) : null;
+    }
+    function fhCartTargetIndex() {
+        if (!cartTargetKey) return -1;
+        for (var i = 0; i < cart.length; i++) { if (cartKey(cart[i].id_barang, cart[i].satuan) === cartTargetKey) return i; }
+        return -1;
+    }
+    // dipanggil ulang tiap renderCart -> pertahankan border highlight
+    function applyCartTarget() {
+        $('#cartItems .cart-row').removeClass('fh-target');
+        if (!cartTargetKey) return;
+        var $row = null;
+        $('#cartItems .cart-row').each(function () { if ($(this).attr('data-key') === cartTargetKey) { $row = $(this); return false; } });
+        if ($row && $row.length) { $row.addClass('fh-target'); if ($row[0].scrollIntoView) $row[0].scrollIntoView({ block: 'nearest' }); }
+        else { cartTargetKey = null; }
+    }
+    function fhCartType(ch) {
+        cartFind += ch;
+        cartTargetKey = fhCartMatch(cartFind);
+        applyCartTarget(); updateFhStatus();
+    }
+    function fhCartBackspace() {
+        cartFind = cartFind.slice(0, -1);
+        cartTargetKey = fhCartMatch(cartFind);
+        applyCartTarget(); updateFhStatus();
+    }
+    function fhCartQty(delta) {
+        var i = fhCartTargetIndex();
+        if (i < 0) { toastError('Ketik nama item dulu untuk memilih.'); return; }
+        cart[i].qty = Math.max(1, parseFloat(cart[i].qty) + delta);
+        renderCart(); updateFab(); updateFhStatus();
+    }
+    function fhCartDelete() {
+        var i = fhCartTargetIndex();
+        if (i < 0) { toastError('Ketik nama item dulu untuk memilih.'); return; }
+        cart.splice(i, 1);
+        cartTargetKey = null; cartFind = '';
+        renderCart(); updateFab(); updateFhStatus();
+        if (!cart.length) { $('#ModalKeranjang').modal('hide'); }
+    }
+
+    // ---------- PEMBAYARAN: mode diskon / uang ----------
+    function fhBayarItems() {
+        if (bayarMode === 'diskon') return $('#diskonBadges .badge-diskon').toArray();
+        if (bayarMode === 'uang')   return $('#quickPay .btn-quick-pay').toArray();
+        return [];
+    }
+    function fhBayarHighlight() {
+        $('#ModalBayar .fh-hl').removeClass('fh-hl');
+        var items = fhBayarItems();
+        if (bayarNavIdx >= 0 && items[bayarNavIdx]) {
+            $(items[bayarNavIdx]).addClass('fh-hl');
+            if (items[bayarNavIdx].scrollIntoView) items[bayarNavIdx].scrollIntoView({ block: 'nearest' });
+        }
+    }
+    function fhBayarEnterMode(mode) {
+        bayarMode = mode;
+        var items = fhBayarItems();
+        if (!items.length) { bayarMode = null; toastError(mode === 'diskon' ? 'Tidak ada diskon aktif.' : 'Nominal belum tersedia.'); return; }
+        bayarNavIdx = 0;
+        // mulai dari yang sedang terpilih (diskon aktif / tombol "Uang Pas")
+        var cur = items.findIndex(function (el) { return $(el).hasClass(mode === 'diskon' ? 'btn-primary' : 'btn-success'); });
+        if (cur >= 0) bayarNavIdx = cur;
+        fhBayarHighlight(); updateFhStatus();
+    }
+    function fhBayarNav(dir) {
+        var items = fhBayarItems();
+        if (!items.length) return;
+        bayarNavIdx = bayarNavIdx < 0 ? 0 : (bayarNavIdx + dir + items.length) % items.length;
+        fhBayarHighlight();
+    }
+    function fhBayarActivate() {
+        var items = fhBayarItems();
+        if (bayarNavIdx >= 0 && items[bayarNavIdx]) { items[bayarNavIdx].click(); }
+        fhBayarExit();
+    }
+    function fhBayarExit() {
+        bayarMode = null; bayarNavIdx = -1;
+        $('#ModalBayar .fh-hl').removeClass('fh-hl');
+        updateFhStatus();
+    }
+
+    $(document).on('keydown', function (e) {
+        if (fhSwalOpen()) return;             // biarkan dialog konfirmasi menangani sendiri
+        if (e.isDefaultPrevented()) return;    // sudah ditangani handler lain (mis. saran pelanggan / barcode)
+        var key = (e.key || '').toLowerCase();
+        var shift = e.shiftKey;
+
+        // toggle panel dari state mana pun
+        if (shift && key === 'h') { e.preventDefault(); toggleFastHand(); return; }
+
+        var st = fhState();
+
+        // Esc menutup panel hanya bila tak ada modal (kalau ada modal, Esc milik modal)
+        if (key === 'escape' && fhOpen && st === 'idle') { e.preventDefault(); closeFastHand(); return; }
+
+        if (st === 'idle') {
+            if (shift && key === 's') { e.preventDefault(); document.getElementById('cariProduk').focus(); }
+            else if (shift && key === 'q') { e.preventDefault(); document.getElementById('inputBarcode').focus(); }
+            else if (shift && key === 'enter') {
+                // tambah produk hanya bila hasil pencarian tepat 1 (1 varian auto-add, banyak varian buka modal)
+                e.preventDefault();
+                var q = (document.getElementById('cariProduk').value || '').toLowerCase().trim();
+                var list = q ? allProducts.filter(function (p) { return (p.nama_barang || '').toLowerCase().indexOf(q) !== -1; }) : allProducts;
+                if (list.length === 1) {
+                    var pr = list[0];
+                    prosesBarang(pr.id, pr.nama_barang, pr.gambar_url, pr.satuan);
+                } else if (list.length === 0) {
+                    toastError('Produk tidak ditemukan.');
+                } else {
+                    toastError('Persempit pencarian sampai tersisa 1 produk.');
+                }
+            }
+            else if (shift && key === 'k') { e.preventDefault(); if (cart.length) { renderCart(); $('#ModalKeranjang').modal('show'); } else { toastError('Keranjang kosong!'); } }
+            else if (shift && key === 'b') { e.preventDefault(); if (cart.length) { $('#btnLanjutBayar').trigger('click'); } else { toastError('Keranjang kosong!'); } }
+            return;
+        }
+        if (st === 'satuan') {
+            if (key === 'arrowleft')       { e.preventDefault(); fhSwitchSatuan(-1); }
+            else if (key === 'arrowright') { e.preventDefault(); fhSwitchSatuan(+1); }
+            else if (key === 'arrowup')    { e.preventDefault(); $('#psPlus').trigger('click'); }
+            else if (key === 'arrowdown')  { e.preventDefault(); $('#psMinus').trigger('click'); }
+            else if (key === 'enter')      { e.preventDefault(); $('#btnTambahKeKeranjang').trigger('click'); }
+            return;
+        }
+        if (st === 'keranjang') {
+            if (fhIsText(document.activeElement)) { return; }  // input qty yang diklik: biar normal
+            if (shift && key === 'enter') { e.preventDefault(); $('#btnLanjutBayar').trigger('click'); return; }
+            if (key === 'escape') {
+                if (cartFind || cartTargetKey) { e.preventDefault(); fhResetCartTarget(); updateFhStatus(); return; }
+                return; // biar modal ditutup bootstrap
+            }
+            if (key === 'arrowup')   { e.preventDefault(); fhCartQty(+1); return; }
+            if (key === 'arrowdown') { e.preventDefault(); fhCartQty(-1); return; }
+            if (key === 'delete')    { e.preventDefault(); fhCartDelete(); return; }
+            if (key === 'backspace') { e.preventDefault(); fhCartBackspace(); return; }
+            // ketik nama item (huruf/angka/spasi) -> type-ahead
+            if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key && e.key.length === 1 && /[a-z0-9 ]/i.test(e.key)) {
+                e.preventDefault(); fhCartType(e.key); return;
+            }
+            return;
+        }
+        if (st === 'bayar') {
+            var inPel = document.activeElement && document.activeElement.id === 'inputPembeli';
+
+            // sedang dalam mode (diskon/uang): panah pilih, Enter pakai, Esc keluar
+            if (bayarMode) {
+                if (key === 'arrowleft' || key === 'arrowup')    { e.preventDefault(); fhBayarNav(-1); return; }
+                if (key === 'arrowright' || key === 'arrowdown') { e.preventDefault(); fhBayarNav(+1); return; }
+                if (key === 'enter')  { e.preventDefault(); fhBayarActivate(); return; }
+                if (key === 'escape') { e.preventDefault(); fhBayarExit(); return; }
+                return;
+            }
+
+            // shortcut huruf hanya bila TIDAK sedang mengetik nama pelanggan (biar bisa ketik kapital)
+            if (!inPel) {
+                if (shift && key === 'u') { e.preventDefault(); fhBayarEnterMode('uang'); return; }
+                if (shift && key === 'n') { e.preventDefault(); $('.summaryTotalBayar').focus(); return; }
+                if (shift && key === 'd') { e.preventDefault(); fhBayarEnterMode('diskon'); return; }
+                if (shift && key === 'p') { e.preventDefault(); document.getElementById('inputPembeli').focus(); return; }
+            }
+            if (key === 'enter') {
+                var ae = document.activeElement;
+                if (ae && ae.tagName === 'BUTTON') return; // tombol terfokus ditekan native
+                if (inPel) return;                          // jangan konfirmasi dari field pelanggan
+                e.preventDefault(); $('#btnKonfirmasiBayar').trigger('click'); return;
+            }
+            return;
+        }
     });
 </script>
 

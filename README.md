@@ -7,17 +7,33 @@ Aplikasi **Kasir POS** untuk manajemen penjualan & persediaan stok, dirancang un
 
 ### Preview Aplikasi
 
-| Grafik Omzet | Grafik Terlaris |
-| :---: | :---: |
-| ![Grafik Omzet](public/preview/grafik-omzet.png) | ![Grafik Terlaris](public/preview/grafik-terlaris.png) |
+**Grafik Omzet**
 
-| Tambah Barang (Multi Satuan) | Tambah List Belanjaan (Kasir) |
-| :---: | :---: |
-| ![Tambah Barang](public/preview/tambah-barang.png) | ![List Belanjaan](public/preview/tambah-list-belanjaan.png) |
+![Grafik Omzet](public/preview/grafik-omzet.png)
 
-| Pengaturan Toko | Pengaturan Printer |
-| :---: | :---: |
-| ![Pengaturan Toko](public/preview/pengaturan-toko.png) | ![Pengaturan Printer](public/preview/pengaturan-printer.png) |
+**Grafik Terlaris**
+
+![Grafik Terlaris](public/preview/grafik-terlaris.png)
+
+**Tambah Barang (Multi Satuan)**
+
+![Tambah Barang](public/preview/tambah-barang.png)
+
+**Tambah List Belanjaan (Kasir)**
+
+![List Belanjaan](public/preview/tambah-list-belanjaan.png)
+
+**Pengaturan Toko**
+
+![Pengaturan Toko](public/preview/pengaturan-toko.png)
+
+**Pengaturan Printer**
+
+![Pengaturan Printer](public/preview/pengaturan-printer.png)
+
+**Keyboard Cepat (Pintasan Keyboard)**
+
+![Keyboard Cepat](public/preview/keyboard-cepat.png)
 
 ---
 
@@ -34,7 +50,16 @@ Aplikasi **Kasir POS** untuk manajemen penjualan & persediaan stok, dirancang un
 - **Multi Satuan**: satu barang bisa punya banyak satuan jual (mis. Ecer, Lusin) dengan harga & konversi ke satuan dasar.
 - Keranjang, hitung kembalian, tombol **uang pas / pembulatan cepat**.
 - **Diskon**: kasir tinggal klik badge diskon (persen atau nominal) — subtotal, diskon, & total tampil jelas.
-- **Pelanggan**: pilih dari dropdown pencarian (relasional) atau tambah cepat langsung dari kasir.
+- **Pelanggan**: **autocomplete** nama (maksimal 5 saran dari server) dengan validasi nama harus terdaftar, atau tambah cepat langsung dari kasir.
+- **Modal pembayaran 2 kolom** di layar lebar biar ringkas & tidak memanjang ke bawah.
+
+**Keyboard Cepat (Pintasan Keyboard)**
+- Panel bantuan **context-aware** yang isinya menyesuaikan layar aktif (grid, pilih satuan, keranjang, pembayaran) — buka/tutup dengan `Shift + H`, dan menutupi sidebar saat aktif.
+- **Layar kasir**: `Shift+S` cari produk, `Shift+Q` scan barcode, `Shift+K` buka keranjang, `Shift+B` langsung bayar, `Shift+Enter` tambah produk saat hasil cari tinggal 1.
+- **Pilih satuan**: `←`/`→` ganti satuan, `↑`/`↓` atur jumlah, `Enter` tambah, `Esc` batal.
+- **Keranjang**: ketik nama item untuk **fokus** (baris tersorot), `↑`/`↓` ubah jumlah, `Delete` hapus, `Shift+Enter` lanjut bayar, `Esc` reset.
+- **Pembayaran**: `Shift+U` pilih uang, `Shift+D` diskon (`←`/`→` lalu `Enter`), `Shift+N` nominal manual, `Shift+P` pelanggan, `Enter` konfirmasi.
+- Sengaja hanya memakai `Shift` + huruf / tombol polos di dalam modal — menghindari bentrok shortcut browser & OS (`Ctrl`, `Alt`).
 
 **Master Data**
 - **Kelola Barang**: multi-satuan, barcode, foto produk, stok (dengan pengurangan otomatis saat transaksi).
@@ -69,7 +94,7 @@ Aplikasi **Kasir POS** untuk manajemen penjualan & persediaan stok, dirancang un
 - **Backend**: Laravel 10 (PHP 8.1+)
 - **Database**: MySQL / MariaDB
 - **Frontend**: Bootstrap 5 (template AdminMart), JavaScript, jQuery, Vite + Tailwind
-- **Library**: Yajra DataTables, PhpSpreadsheet (Excel), Select2, Chart.js, SweetAlert2, Toastify
+- **Library**: Yajra DataTables, PhpSpreadsheet (Excel), Chart.js, SweetAlert2, Toastify
 - **Hardware**: Thermal Printer via QZ Tray (ESC/POS)
 
 ### Kebutuhan Sistem

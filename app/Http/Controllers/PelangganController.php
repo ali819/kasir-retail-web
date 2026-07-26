@@ -104,20 +104,26 @@ class PelangganController extends Controller
         return response()->json(['kode' => 200, 'pesan' => 'Pelanggan berhasil dihapus!']);
     }
 
-    // dipakai Select2 di kasir (searchable, remote)
+    // dipakai autocomplete pelanggan di kasir (input biasa + datalist)
     public function search(Request $request)
     {
         $q = trim((string) $request->q);
+
+        // batasi jumlah hasil (default & maksimal 20; kasir mengirim 5)
+        $limit = (int) ($request->limit ?: 20);
+        if ($limit < 1)  { $limit = 20; }
+        if ($limit > 20) { $limit = 20; }
+
         $query = Pelanggan::query()->select('id', 'nama', 'no_telp');
         if ($q !== '') {
             $query->where('nama', 'like', '%'.$q.'%')
                   ->orWhere('no_telp', 'like', '%'.$q.'%');
         }
-        $items = $query->orderBy('nama')->limit(20)->get();
+        $items = $query->orderBy('nama')->limit($limit)->get();
 
         $results = $items->map(function ($p) {
             $text = $p->nama.($p->no_telp ? ' ('.$p->no_telp.')' : '');
-            return ['id' => $p->id, 'text' => $text, 'nama' => $p->nama];
+            return ['id' => $p->id, 'text' => $text, 'nama' => $p->nama, 'no_telp' => $p->no_telp];
         });
 
         return response()->json(['results' => $results]);

@@ -57,6 +57,16 @@
       /* rapatkan jarak label "Daftar Menu" ke atas */
       #sidebarnav { padding-top: 2px; }
       #sidebarnav .nav-small-cap { margin-top: 0 !important; padding-top: 6px !important; }
+      /* Keyboard Cepat: sub-menu bergaris di bawah Layanan Kasir */
+      .kc-conn { width: 12px; height: 20px; margin-top: -6px; flex-shrink: 0; border-left: 1.5px solid #d5dae4; border-bottom: 1.5px solid #d5dae4; border-bottom-left-radius: 8px; }
+      .kc-sublink { display: flex; align-items: center; gap: 8px; flex: 1; margin-left: 6px; padding: 7px 10px; border-radius: 8px; color: #6b7385; font-size: 13px; text-decoration: none; transition: background .15s; }
+      .kc-sublink:hover { background: #f2f5ff; color: #2a3547; }
+      .kc-sublink i { font-size: 15px; color: #5d87ff; }
+      .kc-sublink .kc-kbd { margin-left: auto; font-size: 11px; padding: 1px 6px; border-radius: 5px; background: rgba(93,135,255,.16); color: #4f74e6; }
+      [data-bs-theme="dark"] .kc-conn { border-color: #3a4152; }
+      [data-bs-theme="dark"] .kc-sublink { color: #aab2c5; }
+      [data-bs-theme="dark"] .kc-sublink:hover { background: #2b3450; color: #e6e9f0; }
+      [data-bs-theme="dark"] .kc-sublink .kc-kbd { color: #9db6ff; }
       /* konten full-width: buang max-width 1200px & auto-center bawaan template (sejajar header) */
       .body-wrapper > .container-fluid,
       .body-wrapper > .container-lg,
@@ -105,10 +115,10 @@
         width: 51px;
         height: 51px;
         margin: 6px;
-        border: 6px solid #1b64bd; /* Warna biru (#1b64bd) */
+        border: 6px solid #5D87FF; /* Warna biru (#5D87FF) */
         border-radius: 50%;
         animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-        border-color: #1b64bd transparent transparent transparent; /* Warna biru (#1b64bd) */
+        border-color: #5D87FF transparent transparent transparent; /* Warna biru (#5D87FF) */
       }
 
       .lds-ring div:nth-child(1) {
@@ -200,6 +210,17 @@
                   <span class="hide-menu">Layanan&nbsp;Kasir</span>
                 </a>
               </li>
+              {{-- Keyboard Cepat: pintasan keyboard, hanya muncul di halaman kasir --}}
+              @if (request()->routeIs('kasir'))
+              <li class="px-3" style="padding-bottom:8px;">
+                <div style="display:flex; margin-left:22px;">
+                  <span class="kc-conn"></span>
+                  <a href="javascript:void(0)" id="btnFastHand" class="kc-sublink hide-menu">
+                    <i class="ti ti-keyboard"></i><span>Pintasan</span><span class="kc-kbd">⇧ H</span>
+                  </a>
+                </div>
+              </li>
+              @endif
               @endif
               {{-- Kelola Pelanggan: admin + kasir --}}
               @if ($u->isAdmin() || $u->isKasir())
@@ -397,6 +418,22 @@
     <script src="{{ asset('template/dist/js/app-style-switcher.js') }}"></script>
     <script src="{{ asset('template/dist/js/sidebarmenu.js') }}"></script>
     <script src="{{ asset('template/dist/js/custom.js') }}"></script>
+    <script>
+        // FIX (Android): saat fokus ke input (mis. cari menu di sidebar), keyboard
+        // virtual muncul & memicu event 'resize'. Handler template (setsidebartype)
+        // ikut jalan lalu menambah class 'mini-sidebar' -> sidebar yang terbuka
+        // menutup sendiri. Keyboard hanya mengubah TINGGI, bukan LEBAR; jadi kalau
+        // lebar layar tak berubah, blokir handler resize template (fase capture,
+        // selalu jalan sebelum handler jQuery vendor).
+        (function () {
+            var lastW = window.innerWidth;
+            window.addEventListener('resize', function (e) {
+                var w = window.innerWidth;
+                if (w === lastW) { e.stopImmediatePropagation(); } // resize karena keyboard -> abaikan
+                lastW = w;
+            }, true);
+        })();
+    </script>
     <!--  current page js files -->
     <script src="{{ asset('template/dist/libs/owl.carousel/dist/owl.carousel.min.js') }}"></script>
     <script src="{{ asset('template/dist/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>

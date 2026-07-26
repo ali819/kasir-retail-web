@@ -48,6 +48,12 @@
     [data-bs-theme="dark"] .left-sidebar { background-color: #232733 !important; border-right: 1px solid #2e3440; }
     [data-bs-theme="dark"] .app-header,
     [data-bs-theme="dark"] .app-header .navbar { background-color: #232733 !important; }
+    /* menu header versi mobile (navbar-collapse) — template kasih bg putih di <=991.98px */
+    [data-bs-theme="dark"] .navbar-collapse { background-color: #232733 !important; border-top-color: #2e3440 !important; }
+    /* header saat di-scroll (fixed-header): template ubah navbar jadi KARTU PUTIH.
+       Di dark mode isian ikut warna tema (jangan putih); shadow pemisah tetap dipertahankan. */
+    [data-bs-theme="dark"] .app-header.fixed-header .navbar,
+    [data-bs-theme="dark"] #main-wrapper[data-layout="vertical"] .app-header.fixed-header .navbar { background: #232733 !important; }
     [data-bs-theme="dark"] .card { background-color: #232733; border-color: #2e3440; }
     [data-bs-theme="dark"] .card.bg-light-info { background-color: #1f2a33 !important; }
     [data-bs-theme="dark"] .bg-light,
